@@ -1,0 +1,10 @@
+
+const op::swap_ton_to_jetton = 1092;
+const op::swap_jetton_to_jetton = 1093;
+const op::swap_jetton_to_ton = 1094;
+const op::transfer_notification = 0x7362d09c;
+const op::transfer = 0xf8a7ea5;
+const op::make_swap_ton = 1029;
+const op::retrieve_fee = 1030;
+const op::retrieved_fee = 1031;
+const op::update_referral = 1032;

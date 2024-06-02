@@ -24,8 +24,8 @@ cell calculate_swap_wallet_state_init(
 ) inline {
   return begin_cell()
             .store_uint(0, 2)
-            .store_dict(notcoin_farm_wallet_code)
-            .store_dict(pack_notcoin_farm_wallet_data(
+            .store_dict(swap_wallet_code)
+            .store_dict(pack_swap_wallet_data(
               owner_address,
               0,
               begin_cell().end_cell(),

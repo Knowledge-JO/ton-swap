@@ -8,3 +8,7 @@ const op::make_swap_ton = 1029;
 const op::retrieve_fee = 1030;
 const op::retrieved_fee = 1031;
 const op::update_referral = 1032;
+const op::initialize_swap_wallet = 1033;
+const op::update_fees = 1034;
+const op::change_admin = 1035;
+const op::change_co_admin = 1036;

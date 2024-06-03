@@ -9,7 +9,6 @@ const SCALE_ADDRESS = Address.parse(
     'EQBlqsm144Dq6SjbPI4jjZvA1hqTIP3CvHovbIfW_t-SCALE',
 );
 
-const receipientAddress = Address.parse('');
 const referralAddress = beginCell().endCell();
 const TON = Asset.native();
 const SCALE = Asset.jetton(SCALE_ADDRESS);

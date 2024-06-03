@@ -17,6 +17,8 @@ class Op {
     static withdraw_ton = 1037;
 }
 
-const swapRootAddress = Address.parse('');
+const swapRootAddress = Address.parse(
+    'EQBlqsm144Dq6SjbPI4jjZvA1hqTIP3CvHovbIfW_t-SCALE',
+);
 
 export { Op, swapRootAddress };

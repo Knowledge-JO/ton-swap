@@ -79,14 +79,22 @@ export class SwapRoot implements Contract {
         provider: ContractProvider,
         via: Sender,
         value: bigint,
-        fee: bigint,
+        options: {
+            fee: bigint;
+            gasFee: bigint;
+            fwdAmount: bigint;
+            minValue: bigint;
+        },
     ) {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
                 .storeUint(Op.update_fees, 32)
-                .storeCoins(fee)
+                .storeCoins(options.fee)
+                .storeCoins(options.gasFee)
+                .storeCoins(options.fwdAmount)
+                .storeCoins(options.minValue)
                 .endCell(),
         });
     }

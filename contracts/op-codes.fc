@@ -13,3 +13,4 @@ const op::update_fees = 1034;
 const op::change_admin = 1035;
 const op::change_co_admin = 1036;
 const op::withdraw_ton = 1037;
+const op::withdraw_jetton = 1038;

@@ -11,6 +11,7 @@ import {
     Asset,
     PoolType,
     VaultJetton,
+    ReadinessStatus,
 } from '@dedust/sdk';
 
 const SCALE_ADDRESS = Address.parse(
@@ -53,7 +54,7 @@ export async function run(provider: NetworkProvider) {
     );
     const scaleWallet = provider.open(await scaleRoot.getWallet(address));
 
-    const amountIn = toNano('0.5');
+    const amountIn = toNano('0.3');
 
     const TON_SCALE_POOL = provider.open(
         await factory.getPool(PoolType.VOLATILE, [TON, SCALE]),
@@ -67,18 +68,33 @@ export async function run(provider: NetworkProvider) {
         await factory.getJettonVault(SCALE_ADDRESS),
     );
 
-    await scaleWallet.sendTransfer(sender, toNano('0.05'), {
+    // Check if pool exists:
+    if ((await TON_SCALE_POOL.getReadinessStatus()) !== ReadinessStatus.READY) {
+        throw new Error('Pool (TON, SCALE) does not exist.');
+    }
+
+    // Check if vault exits:
+    if ((await scaleVault.getReadinessStatus()) !== ReadinessStatus.READY) {
+        throw new Error('Vault (SCALE) does not exist.');
+    }
+    // Check if pool exists:
+    if ((await TON_BOLT_POOL.getReadinessStatus()) !== ReadinessStatus.READY) {
+        throw new Error('Pool (TON, BOLT) does not exist.');
+    }
+
+    await scaleWallet.sendTransfer(sender, toNano('0.4'), {
         queryId: 0,
-        destination: userSwapAggregatorAddress,
         amount: amountIn,
+        destination: userSwapAggregatorAddress,
         responseAddress: address,
         customPayload: new Cell(),
-        forwardAmount: toNano('0.6'),
+        forwardAmount: toNano('0.25'),
         forwardPayload: beginCell()
             .storeRef(
                 VaultJetton.createSwapPayload({
                     poolAddress: TON_SCALE_POOL.address,
                     limit,
+                    swapParams: { recipientAddress: address },
                     next: { poolAddress: TON_BOLT_POOL.address },
                 }),
             )

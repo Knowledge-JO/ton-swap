@@ -53,7 +53,7 @@ export async function run(provider: NetworkProvider) {
         throw new Error('Vault (TON) does not exist.');
     }
 
-    await swapAggregator.sendSwapTonToJetton(sender, toNano('1'), {
+    await swapAggregator.sendSwapTonToJetton(sender, toNano('0.4'), {
         receipientAddress: address,
         poolAddress: pool.address,
         tonVaultAddr: tonVault.address,

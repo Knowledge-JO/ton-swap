@@ -183,6 +183,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
         slice from_address = in_msg_body~load_msg_addr();
         int operation = in_msg_body~load_uint(32);
+        slice sender = in_msg_body~load_msg_addr();
         throw_unless(202, equal_slices(calculate_user_swap_wallet_address(from_address,my_address(),swap_wallet_code), msg_sender));
         var msg_body = begin_cell()
             .store_uint(op::retrieved_fee, 32)
@@ -191,6 +192,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             .store_coins(gas_fee)
             .store_coins(fwd_amount)
             .store_coins(min_value)
+            .store_slice(sender)
             .store_slice(in_msg_body)
         .end_cell();
 

@@ -108,6 +108,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
+    slice sender = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
     slice receipient_addr = swap_data~load_msg_addr();
@@ -176,6 +177,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
+    slice sender = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
     int query_id = swap_data~load_uint(64); ;; query_id
@@ -189,6 +191,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     slice referral_addr = forward_payload~load_ref().begin_parse();
     var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, jettonToTon);
     throw_unless(200, msg_value > FWD_AMOUNT + MIN_VALUE);
+    throw_unless(201, equal_slices(sender, aggregator_jetton_addr));
 
     refer(referral_reward, referral_addr);
     send_empty_message(trade_fee - referral_reward,root_addr,PAID_EXTERNALLY);
@@ -200,7 +203,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         .store_slice(jetton_vault) ;; destination
         .store_slice(from_address) ;; response address
         .store_maybe_ref(begin_cell().end_cell())
-        .store_coins(FWD_AMOUNT) ;; 0.25
+        .store_coins(FWD_AMOUNT) 
         .store_maybe_ref(swap_payload)
     .end_cell();
 
@@ -231,6 +234,36 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 }
 
 
+() withdraw_jetton(slice in_msg_body, slice msg_sender) impure {
+    var (
+        slice owner_address,
+        int noReferredUsers, 
+        int initialized,
+        cell referrer_data, 
+        slice root_addr, 
+        cell swap_wallet_code
+    ) = load_data();
+
+    throw_unless(506, equal_slices(msg_sender, owner_address));
+
+    int jetton_amount = in_msg_body~load_coins();
+    slice aggregator_jetton_addr = in_msg_body~load_msg_addr();
+
+    var msg_body = begin_cell()
+        .store_uint(op::transfer, 32)
+        .store_uint(0, 64) ;; query_id
+        .store_coins(jetton_amount)
+        .store_slice(owner_address) ;; destination
+        .store_slice(owner_address) ;; response address
+        .store_maybe_ref(begin_cell().end_cell())
+        .store_coins(0)
+        .store_maybe_ref(begin_cell().end_cell())
+    .end_cell();
+
+    send_simple_message(0,aggregator_jetton_addr,msg_body,CARRY_REMAINING_GAS);
+}
+ 
+
 () retrieve_fee(int my_balance, slice in_msg_body, slice msg_sender, int msg_value, int operation) impure {
 
     var (
@@ -257,6 +290,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             .store_uint(op::retrieve_fee, 32)
             .store_slice(owner_address)
             .store_uint(operation, 32)
+            .store_slice(msg_sender)
             .store_ref(
                 begin_cell()
                     .store_slice(receipient_addr)
@@ -280,6 +314,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             .store_uint(op::retrieve_fee, 32)
             .store_slice(owner_address)
             .store_uint(operation, 32)
+            .store_slice(msg_sender)
             .store_ref(
                 begin_cell()
                     .store_uint(query_id, 64)
@@ -326,25 +361,9 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     ;; jettons to jetton 
     ;; jettons to ton
     if(op == op::transfer_notification) {
-        ;; swap jetton to either ton or jetton
-        int query_id = in_msg_body~load_uint(64); ;; query_id
-        int jetton_amount = in_msg_body~load_coins();
-        slice from_address = in_msg_body~load_msg_addr();
-        cell forward_payload = in_msg_body~load_ref();
-        slice fws = forward_payload.begin_parse();
-        cell swap_payload = fws~load_ref();
-        slice aggregator_jetton_addr = fws~load_msg_addr();
-        fws.end_parse();
-        throw_unless(101, equal_slices(msg_sender, aggregator_jetton_addr));
-        var new_msg_body = begin_cell()
-            .store_uint(query_id, 64)
-            .store_coins(jetton_amount)
-            .store_slice(from_address)
-            .store_ref(forward_payload)
-        .end_cell().begin_parse();
         int operation = 2;
-        retrieve_fee(my_balance,new_msg_body,msg_sender, msg_value, operation);
-        ;; jetton_to_jetton_or_ton(my_balance,in_msg_body, msg_sender, msg_value);
+        retrieve_fee(my_balance,in_msg_body,msg_sender, msg_value, operation);
+        ;; jetton_to_jetton(my_balance,in_msg_body, msg_sender, msg_value);
     }
 
     if(op == op::make_swap_ton){
@@ -384,6 +403,10 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
     if(op == op::withdraw_ton) {
         withdraw_excess_tokens(my_balance,in_msg_body,msg_sender);
+    }
+
+    if(op == op::withdraw_jetton){
+        withdraw_jetton(in_msg_body,msg_sender);
     }
 
 }

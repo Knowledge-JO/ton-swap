@@ -4,6 +4,7 @@ import { Address, beginCell, toNano } from '@ton/core';
 import { SwapAggregator } from '../wrappers/SwapAggregator';
 import { SwapRoot } from '../wrappers/SwapRoot';
 import { swapRootAddress } from '../wrappers/constants';
+import { ReadinessStatus } from '@dedust/sdk';
 
 const SCALE_ADDRESS = Address.parse(
     'EQBlqsm144Dq6SjbPI4jjZvA1hqTIP3CvHovbIfW_t-SCALE',
@@ -24,6 +25,8 @@ export async function run(provider: NetworkProvider) {
     const userSwapAggregatorAddress =
         await swapRoot.getUserAggregatorAddress(address);
 
+    console.log(userSwapAggregatorAddress);
+
     const swapAggregator = provider.open(
         SwapAggregator.createFromAddress(userSwapAggregatorAddress),
     );
@@ -32,11 +35,25 @@ export async function run(provider: NetworkProvider) {
         Factory.createFromAddress(MAINNET_FACTORY_ADDR),
     );
 
-    const tonVault = await factory.getNativeVault();
+    const tonVault = provider.open(await factory.getNativeVault());
 
-    const pool = await factory.getPool(PoolType.VOLATILE, [TON, SCALE]);
+    const pool = provider.open(
+        await factory.getPool(PoolType.VOLATILE, [TON, SCALE]),
+    );
 
-    await swapAggregator.sendSwapTonToJetton(sender, toNano('0.4'), {
+    // ...
+
+    // Check if pool exists:
+    if ((await pool.getReadinessStatus()) !== ReadinessStatus.READY) {
+        throw new Error('Pool (TON, SCALE) does not exist.');
+    }
+
+    // Check if vault exits:
+    if ((await tonVault.getReadinessStatus()) !== ReadinessStatus.READY) {
+        throw new Error('Vault (TON) does not exist.');
+    }
+
+    await swapAggregator.sendSwapTonToJetton(sender, toNano('1'), {
         receipientAddress: address,
         poolAddress: pool.address,
         tonVaultAddr: tonVault.address,

@@ -80,6 +80,9 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
     throw_unless(190, equal_slices(msg_sender,admin_address) | equal_slices(msg_sender,co_admin_address));
     fee = in_msg_body~load_coins();
+    gas_fee = in_msg_body~load_coins();
+    fwd_amount = in_msg_body~load_coins();
+    min_value = in_msg_body~load_coins();
     save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,swap_wallet_code);
 }
 
@@ -142,7 +145,11 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     }
 
     slice cs = in_msg_full.begin_parse();
-    int flag = cs~load_uint(64);
+    int flags = cs~load_uint(4);
+    if (flags & 1) {
+        ;; NOTE: Ignore bounced messages.
+        return ();
+    }
     slice msg_sender = cs~load_msg_addr();
 
     int op = in_msg_body~load_uint(32);

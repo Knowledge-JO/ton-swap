@@ -18,7 +18,7 @@ class Op {
 }
 
 const swapRootAddress = Address.parse(
-    'EQBlqsm144Dq6SjbPI4jjZvA1hqTIP3CvHovbIfW_t-SCALE',
+    'EQB2LAw5-NUfOq9f-bp86TrKS07_Fesn1yLArPlUoIjvZD0C',
 );
 
 export { Op, swapRootAddress };

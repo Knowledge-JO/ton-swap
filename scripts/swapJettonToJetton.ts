@@ -56,7 +56,7 @@ export async function run(provider: NetworkProvider) {
     const scaleWallet = provider.open(await scaleRoot.getWallet(address));
     const boltWallet = provider.open(await boltRoot.getWallet(address));
 
-    const amountIn = toNano('3');
+    const amountIn = toNano('0.2');
 
     const TON_SCALE_POOL = provider.open(
         await factory.getPool(PoolType.VOLATILE, [TON, SCALE]),
@@ -86,27 +86,27 @@ export async function run(provider: NetworkProvider) {
         throw new Error('Pool (TON, BOLT) does not exist.');
     }
 
-    await boltWallet.sendTransfer(sender, toNano('0.5'), {
+    await scaleWallet.sendTransfer(sender, toNano('0.3'), {
         queryId: 0,
         amount: amountIn,
         destination: userSwapAggregatorAddress,
         responseAddress: address,
         customPayload: new Cell(),
-        forwardAmount: toNano('0.45'),
+        forwardAmount: toNano('0.25'),
         forwardPayload: beginCell()
             .storeRef(
                 VaultJetton.createSwapPayload({
-                    poolAddress: TON_BOLT_POOL.address,
+                    poolAddress: TON_SCALE_POOL.address,
                     limit,
                     swapParams: { recipientAddress: address },
-                    next: { poolAddress: TON_SCALE_POOL.address },
+                    next: { poolAddress: TON_BOLT_POOL.address },
                 }),
             )
             .storeCoins(toNano('0.01')) //jetton converted to ton for fee deduction
             .storeAddress(
-                (await boltRoot.getWallet(userSwapAggregatorAddress)).address, // aggregator jetton address
+                (await scaleRoot.getWallet(userSwapAggregatorAddress)).address, // aggregator jetton address
             )
-            .storeAddress(boltVault.address) // jetton vault
+            .storeAddress(scaleVault.address) // jetton vault
             .storeRef(beginCell().storeAddress(address).endCell())
             .endCell(),
     });

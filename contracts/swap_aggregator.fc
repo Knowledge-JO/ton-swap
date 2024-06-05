@@ -18,6 +18,7 @@ slice addr_none() asm "b{00} PUSHSLICE";
 
 const int ton_vault::swap = 0xea06185d;
 const int min_tons_for_storage = 10000000; ;; 0.01 ton
+const int gas_consumption = 15000000;
 
 (slice, int, int, int, cell, slice, cell) load_data() inline {
     slice ds = get_data().begin_parse();
@@ -137,9 +138,9 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, msg_value);
 
     if(trade_fee == fixed_fee){
-        throw_unless(99, msg_value > GAS_FEE + fixed_fee);
+        throw_unless(99, msg_value > GAS_FEE + fixed_fee + gas_consumption);
     } else {
-        throw_unless(100, msg_value > GAS_FEE);
+        throw_unless(100, msg_value > GAS_FEE + gas_consumption);
     }
 
     refer(referral_reward, referral_addr);
@@ -170,7 +171,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         begin_cell()
             .store_uint(msg_flag::bounceable, 6)
             .store_slice(ton_vault_addr)
-            .store_coins(trade_value - trade_fee)
+            .store_coins(trade_value - trade_fee - gas_consumption)
             .store_zeros(1 + 4 + 4 + 64 + 32 + 1)
             .store_maybe_ref(msg_body)
             .end_cell(),
@@ -207,7 +208,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     slice jetton_vault = forward_payload~load_msg_addr();
     slice referral_addr = forward_payload~load_ref().begin_parse();
     var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, jettonToTon);
-    throw_unless(200, msg_value >  MIN_VALUE);
+    throw_unless(200, msg_value >  MIN_VALUE + gas_consumption);
     throw_unless(201, MIN_VALUE > FWD_AMOUNT);
     throw_unless(202, equal_slices(sender, aggregator_jetton_addr));
 
@@ -226,6 +227,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     .end_cell();
 
     send_simple_message(MIN_VALUE,aggregator_jetton_addr,msg_body,PAID_EXTERNALLY);
+    send_empty_message(msg_value - MIN_VALUE - gas_consumption,owner_address,NORMAL);
 }
 
 
@@ -242,7 +244,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
 
 
-    throw_unless(250, my_balance > 1000000000);
+    ;; throw_unless(250, my_balance > 1000000000);
     int withdrawal_amount = in_msg_body~load_coins();
 
     throw_unless(505, equal_slices(msg_sender, owner_address));

@@ -10,7 +10,7 @@ export async function run(provider: NetworkProvider) {
 
     const swapRoot = provider.open(SwapRoot.createFromAddress(swapRootAddress));
 
-    await swapRoot.sendUpdateFees(sender, toNano('0.01'), {
+    await swapRoot.sendUpdateFees(sender, toNano('0.005'), {
         fee: toNano('0.01'),
         gasFee: toNano('0.15'),
         fwdAmount: toNano('0.15'),

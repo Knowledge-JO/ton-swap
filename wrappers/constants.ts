@@ -15,6 +15,7 @@ class Op {
     static change_admin = 1035;
     static change_co_admin = 1036;
     static withdraw_ton = 1037;
+    static withdraw_jetton = 1038;
 }
 
 const swapRootAddress = Address.parse(

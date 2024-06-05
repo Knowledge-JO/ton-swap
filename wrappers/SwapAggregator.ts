@@ -87,4 +87,21 @@ export class SwapAggregator implements Contract {
                 .endCell(),
         });
     }
+
+    async sendWithdrawJetton(
+        provider: ContractProvider,
+        via: Sender,
+        value: bigint,
+        options: { jettonAmount: bigint; userAggregatorJettonAddress: Address },
+    ) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Op.withdraw_jetton, 32)
+                .storeCoins(options.jettonAmount)
+                .storeAddress(options.userAggregatorJettonAddress)
+                .endCell(),
+        });
+    }
 }

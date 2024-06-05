@@ -160,4 +160,24 @@ export class SwapRoot implements Contract {
 
         return resp.stack.readAddress();
     }
+
+    async getSwapRootData(provider: ContractProvider) {
+        const resp = await provider.get('get_root_data', []);
+        return {
+            adminAddress: resp.stack.readAddress(),
+            coAdminAddress: resp.stack.readAddress(),
+            fixedFee: resp.stack.readNumber(),
+            gasFee: resp.stack.readNumber(),
+            fwdAmount: resp.stack.readNumber(),
+            minValue: resp.stack.readNumber(),
+            swapAggregatorCode: resp.stack.readCell(),
+        };
+    }
 }
+// slice admin_address,
+//         slice co_admin_address,
+//         int fee,
+//         int gas_fee,
+//         int fwd_amount,
+//         int min_value,
+//         cell swap_wallet_code

@@ -87,7 +87,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
 (int, int, int) calc_fees(int fixed_fee, int msg_value) inline_ref {
     int fee = msg_value * 1 / 100;
-    int trade_fee = fee > fixed_fee ? fee : fixed_fee;
+    int trade_fee = fee > fixed_fee ? fee : fixed_fee;ref_data
     int referral_reward = trade_fee * 18 / 100; 
     int trade_value = msg_value;
 

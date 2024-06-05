@@ -52,9 +52,11 @@ export async function run(provider: NetworkProvider) {
     const scaleRoot = provider.open(
         JettonRoot.createFromAddress(SCALE_ADDRESS),
     );
+    const boltRoot = provider.open(JettonRoot.createFromAddress(BOLT_ADDRESS));
     const scaleWallet = provider.open(await scaleRoot.getWallet(address));
+    const boltWallet = provider.open(await boltRoot.getWallet(address));
 
-    const amountIn = toNano('0.3');
+    const amountIn = toNano('3');
 
     const TON_SCALE_POOL = provider.open(
         await factory.getPool(PoolType.VOLATILE, [TON, SCALE]),
@@ -67,6 +69,8 @@ export async function run(provider: NetworkProvider) {
     const scaleVault = provider.open(
         await factory.getJettonVault(SCALE_ADDRESS),
     );
+
+    const boltVault = provider.open(await factory.getJettonVault(BOLT_ADDRESS));
 
     // Check if pool exists:
     if ((await TON_SCALE_POOL.getReadinessStatus()) !== ReadinessStatus.READY) {
@@ -82,7 +86,7 @@ export async function run(provider: NetworkProvider) {
         throw new Error('Pool (TON, BOLT) does not exist.');
     }
 
-    await scaleWallet.sendTransfer(sender, toNano('0.6'), {
+    await boltWallet.sendTransfer(sender, toNano('0.5'), {
         queryId: 0,
         amount: amountIn,
         destination: userSwapAggregatorAddress,
@@ -92,17 +96,17 @@ export async function run(provider: NetworkProvider) {
         forwardPayload: beginCell()
             .storeRef(
                 VaultJetton.createSwapPayload({
-                    poolAddress: TON_SCALE_POOL.address,
+                    poolAddress: TON_BOLT_POOL.address,
                     limit,
                     swapParams: { recipientAddress: address },
-                    next: { poolAddress: TON_BOLT_POOL.address },
+                    next: { poolAddress: TON_SCALE_POOL.address },
                 }),
             )
             .storeCoins(toNano('0.01')) //jetton converted to ton for fee deduction
             .storeAddress(
-                (await scaleRoot.getWallet(userSwapAggregatorAddress)).address, // aggregator jetton address
+                (await boltRoot.getWallet(userSwapAggregatorAddress)).address, // aggregator jetton address
             )
-            .storeAddress(scaleVault.address) // jetton vault
+            .storeAddress(boltVault.address) // jetton vault
             .storeRef(beginCell().storeAddress(address).endCell())
             .endCell(),
     });

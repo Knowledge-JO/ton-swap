@@ -14,6 +14,6 @@ export async function run(provider: NetworkProvider) {
         fee: toNano('0.01'),
         gasFee: toNano('0.15'),
         fwdAmount: toNano('0.15'),
-        minValue: toNano('0.25'),
+        minValue: toNano('0.2'),
     });
 }

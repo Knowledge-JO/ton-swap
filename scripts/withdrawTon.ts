@@ -21,6 +21,6 @@ export async function run(provider: NetworkProvider) {
     await swapAggregator.sendWithdrawExcessTon(
         sender,
         toNano('0.01'),
-        toNano('1.42'),
+        toNano('1.028'),
     );
 }

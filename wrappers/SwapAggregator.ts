@@ -104,4 +104,17 @@ export class SwapAggregator implements Contract {
                 .endCell(),
         });
     }
+
+    async getSwapAggregatorData(provider: ContractProvider) {
+        const resp = await provider.get('get_swap_wallet_data', []);
+        return {
+            ownerAddress: resp.stack.readAddress(),
+            noReferredUsers: resp.stack.readNumber(),
+            earned: resp.stack.readNumber(),
+            initialized: resp.stack.readNumber(),
+            referrerData: resp.stack.readCell(),
+            swapRootAddress: resp.stack.readAddress(),
+            swapAggregatorCode: resp.stack.readCell(),
+        };
+    }
 }

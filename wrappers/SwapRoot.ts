@@ -174,10 +174,3 @@ export class SwapRoot implements Contract {
         };
     }
 }
-// slice admin_address,
-//         slice co_admin_address,
-//         int fee,
-//         int gas_fee,
-//         int fwd_amount,
-//         int min_value,
-//         cell swap_wallet_code

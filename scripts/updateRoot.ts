@@ -12,7 +12,7 @@ export async function run(provider: NetworkProvider) {
 
     await swapRoot.sendUpdateFees(sender, toNano('0.005'), {
         fee: toNano('0.01'),
-        gasFee: toNano('0.15'),
+        gasFee: toNano('0.2'),
         fwdAmount: toNano('0.15'),
         minValue: toNano('0.2'),
     });

@@ -13,7 +13,8 @@ export async function run(provider: NetworkProvider) {
 
     await swapRoot.sendWithdrawExcessTon(
         sender,
-        toNano('0.01'),
-        toNano('0.11'),
+        toNano('0.005'),
+        toNano('0.047'),
+        address,
     );
 }

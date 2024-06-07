@@ -56,7 +56,7 @@ export async function run(provider: NetworkProvider) {
     const scaleWallet = provider.open(await scaleRoot.getWallet(address));
     const boltWallet = provider.open(await boltRoot.getWallet(address));
 
-    const amountIn = toNano('3');
+    const amountIn = toNano('5');
 
     const TON_SCALE_POOL = provider.open(
         await factory.getPool(PoolType.VOLATILE, [TON, SCALE]),
@@ -99,7 +99,6 @@ export async function run(provider: NetworkProvider) {
                     poolAddress: TON_BOLT_POOL.address,
                     limit,
                     swapParams: { recipientAddress: address },
-                    next: { poolAddress: TON_SCALE_POOL.address },
                 }),
             )
             .storeCoins(toNano('0.01')) //jetton converted to ton for fee deduction

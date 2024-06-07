@@ -10,7 +10,6 @@ const SCALE_ADDRESS = Address.parse(
     'EQBlqsm144Dq6SjbPI4jjZvA1hqTIP3CvHovbIfW_t-SCALE',
 );
 
-const referralAddress = beginCell().endCell();
 const TON = Asset.native();
 const SCALE = Asset.jetton(SCALE_ADDRESS);
 const limit = toNano(0);
@@ -52,8 +51,9 @@ export async function run(provider: NetworkProvider) {
     if ((await tonVault.getReadinessStatus()) !== ReadinessStatus.READY) {
         throw new Error('Vault (TON) does not exist.');
     }
+    const referralAddress = beginCell().storeAddress(address).endCell();
 
-    await swapAggregator.sendSwapTonToJetton(sender, toNano('0.45'), {
+    await swapAggregator.sendSwapTonToJetton(sender, toNano('0.05'), {
         receipientAddress: address,
         poolAddress: pool.address,
         tonVaultAddr: tonVault.address,

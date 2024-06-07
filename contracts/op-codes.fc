@@ -15,3 +15,4 @@ const op::change_co_admin = 1036;
 const op::withdraw_ton = 1037;
 const op::withdraw_jetton = 1038;
 const op::update_rewards = 1039;
+const op::revert_jetton = 1040;

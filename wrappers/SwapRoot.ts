@@ -136,6 +136,7 @@ export class SwapRoot implements Contract {
         via: Sender,
         value: bigint,
         amount: bigint,
+        address: Address,
     ) {
         await provider.internal(via, {
             value,
@@ -143,6 +144,7 @@ export class SwapRoot implements Contract {
             body: beginCell()
                 .storeUint(Op.withdraw_ton, 32)
                 .storeCoins(amount)
+                .storeAddress(address)
                 .endCell(),
         });
     }

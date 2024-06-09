@@ -125,7 +125,6 @@ const int gas_consumption = 15000000;
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
-    slice sender = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
     slice receipient_addr = swap_data~load_msg_addr();
@@ -138,9 +137,18 @@ const int gas_consumption = 15000000;
     var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, msg_value);
 
     if(trade_fee == fixed_fee){
-        throw_unless(99, msg_value > GAS_FEE + fixed_fee + gas_consumption);
+        ;; throw_unless(99, msg_value > GAS_FEE + fixed_fee + gas_consumption);
+        if(msg_value < GAS_FEE + fixed_fee + gas_consumption){
+            send_empty_message(0,owner_address,CARRY_REMAINING_GAS);
+            return();
+        }
+        
     } else {
-        throw_unless(100, msg_value > GAS_FEE + gas_consumption);
+        ;; throw_unless(100, msg_value > GAS_FEE + gas_consumption);
+        if(msg_value < GAS_FEE + gas_consumption){
+            send_empty_message(0,owner_address,CARRY_REMAINING_GAS);
+            return();
+        }
     }
 
     refer(referral_reward, referral_addr);
@@ -195,7 +203,6 @@ const int gas_consumption = 15000000;
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
-    slice sender = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
     int query_id = swap_data~load_uint(64); ;; query_id
@@ -208,9 +215,26 @@ const int gas_consumption = 15000000;
     slice jetton_vault = forward_payload~load_msg_addr();
     slice referral_addr = forward_payload~load_ref().begin_parse();
     var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, jettonToTon);
-    throw_unless(200, msg_value >  MIN_VALUE + gas_consumption);
-    throw_unless(201, MIN_VALUE > FWD_AMOUNT);
-    throw_unless(202, equal_slices(sender, aggregator_jetton_addr));
+    ;; throw_unless(200, msg_value >  MIN_VALUE + gas_consumption);
+    var revert_msg_body = begin_cell()
+        .store_uint(op::transfer, 32)
+        .store_uint(0, 64) ;; query_id
+        .store_coins(jetton_amount)
+        .store_slice(from_address) ;; destination
+        .store_slice(from_address) ;; response address
+        .store_maybe_ref(begin_cell().end_cell())
+        .store_coins(0) 
+        .store_maybe_ref(begin_cell().end_cell())
+        .end_cell();
+    if(msg_value < MIN_VALUE + gas_consumption) {
+        send_simple_message(0,aggregator_jetton_addr,revert_msg_body,CARRY_REMAINING_GAS);
+        return();
+    }
+    if(MIN_VALUE < FWD_AMOUNT){
+        send_simple_message(0,aggregator_jetton_addr,revert_msg_body,CARRY_REMAINING_GAS);
+        return();
+    }
+    ;; throw_unless(201, MIN_VALUE > FWD_AMOUNT);
 
     refer(referral_reward, referral_addr);
     send_empty_message(trade_fee - referral_reward,root_addr,PAID_EXTERNALLY);
@@ -248,7 +272,7 @@ const int gas_consumption = 15000000;
     int withdrawal_amount = in_msg_body~load_coins();
 
     throw_unless(505, equal_slices(msg_sender, owner_address));
-    throw_unless(506, my_balance > withdrawal_amount);
+    throw_unless(516, my_balance > withdrawal_amount);
 
     int allowed_amount = min(withdrawal_amount, my_balance - min_tons_for_storage);
 
@@ -317,7 +341,6 @@ const int gas_consumption = 15000000;
             .store_uint(op::retrieve_fee, 32)
             .store_slice(owner_address)
             .store_uint(operation, 32)
-            .store_slice(msg_sender)
             .store_ref(
                 begin_cell()
                     .store_slice(receipient_addr)
@@ -341,7 +364,6 @@ const int gas_consumption = 15000000;
             .store_uint(op::retrieve_fee, 32)
             .store_slice(owner_address)
             .store_uint(operation, 32)
-            .store_slice(msg_sender)
             .store_ref(
                 begin_cell()
                     .store_uint(query_id, 64)
@@ -461,34 +483,6 @@ const int gas_consumption = 15000000;
 
     if(op == op::withdraw_jetton){
         withdraw_jetton(in_msg_body,msg_sender);
-    }
-
-    if(op == op::revert_jetton) {
-        var (
-            slice owner_address,
-            int noReferredUsers,
-            int earned,
-            int initialized,
-            cell referrer_data, 
-            slice root_addr, 
-            cell swap_wallet_code
-        ) = load_data();
-        throw_unless(110, equal_slices(msg_sender,root_addr));
-
-        slice jettonAddr = in_msg_body~load_msg_addr();
-        slice from_addr = in_msg_body~load_msg_addr();
-        int jetton_amount = in_msg_body~load_coins();
-        var msg_body = begin_cell()
-            .store_uint(op::transfer, 32)
-            .store_uint(0, 64) ;; query_id
-            .store_coins(jetton_amount)
-            .store_slice(from_addr) ;; destination
-            .store_slice(from_addr) ;; response address
-            .store_maybe_ref(begin_cell().end_cell())
-            .store_coins(0) 
-            .store_maybe_ref(begin_cell().end_cell())
-        .end_cell();
-        send_simple_message(0,jettonAddr,msg_body,CARRY_REMAINING_GAS);
     }
 
 }

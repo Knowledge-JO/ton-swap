@@ -21,7 +21,7 @@ export async function run(provider: NetworkProvider) {
         ),
     );
 
-    await swapRoot.sendDeploy(sender, toNano('0.005'));
+    await swapRoot.sendDeploy(sender, toNano('0.015'));
 
     await provider.waitForDeploy(swapRoot.address);
 

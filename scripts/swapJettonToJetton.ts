@@ -92,7 +92,7 @@ export async function run(provider: NetworkProvider) {
         destination: userSwapAggregatorAddress,
         responseAddress: address,
         customPayload: new Cell(),
-        forwardAmount: toNano('0.01'),
+        forwardAmount: toNano('0.02'),
         forwardPayload: beginCell()
             .storeRef(
                 VaultJetton.createSwapPayload({

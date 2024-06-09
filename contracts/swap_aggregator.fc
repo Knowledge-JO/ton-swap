@@ -125,6 +125,7 @@ const int gas_consumption = 15000000;
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
+    slice fee_wallet = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
     slice receipient_addr = swap_data~load_msg_addr();
@@ -152,7 +153,7 @@ const int gas_consumption = 15000000;
     }
 
     refer(referral_reward, referral_addr);
-    send_empty_message(trade_fee - referral_reward,root_addr,PAID_EXTERNALLY);
+    send_empty_message(trade_fee - referral_reward,fee_wallet,PAID_EXTERNALLY);
 
     cell msg_body = begin_cell()
         .store_uint(ton_vault::swap, 32)
@@ -203,6 +204,7 @@ const int gas_consumption = 15000000;
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
+    slice fee_wallet = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
     int query_id = swap_data~load_uint(64); ;; query_id
@@ -237,7 +239,7 @@ const int gas_consumption = 15000000;
     ;; throw_unless(201, MIN_VALUE > FWD_AMOUNT);
 
     refer(referral_reward, referral_addr);
-    send_empty_message(trade_fee - referral_reward,root_addr,PAID_EXTERNALLY);
+    send_empty_message(trade_fee - referral_reward,fee_wallet,PAID_EXTERNALLY);
 
     var msg_body = begin_cell()
         .store_uint(op::transfer, 32)

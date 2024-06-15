@@ -5,7 +5,7 @@
 
 const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
-(slice, slice, int, int, int, int, int, cell) load_data() inline {
+(slice, slice, int, int, int, int, int, int, int, cell) load_data() inline {
     slice ds = get_data().begin_parse();
     slice admin_address = ds~load_msg_addr();
     slice co_admin_address = ds~load_msg_addr();
@@ -14,6 +14,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     int fwd_amount = ds~load_coins();
     int min_value = ds~load_coins();
     int total_referral_reward = ds~load_coins();
+    int devFeePercentage = ds~load_uint(32);
+    int referralPercentage = ds~load_uint(32);
     cell swap_wallet_code = ds~load_ref();
 
     return (
@@ -24,6 +26,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         fwd_amount,
         min_value,
         total_referral_reward,
+        devFeePercentage,
+        referralPercentage,
         swap_wallet_code
     );
 }
@@ -37,6 +41,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     int fwd_amount,
     int min_value,
     int total_referral_reward,
+    int devFeePercentage,
+    int referralPercentage,
     cell swap_wallet_code
 ) impure inline {
     set_data(
@@ -48,6 +54,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             .store_coins(fwd_amount)
             .store_coins(min_value)
             .store_coins(total_referral_reward)
+            .store_uint(devFeePercentage, 32)
+            .store_uint(referralPercentage, 32)
             .store_ref(swap_wallet_code)   
         .end_cell()
     );
@@ -64,6 +72,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         int fwd_amount,
         int min_value,
         int total_referral_reward,
+        int devFeePercentage,
+        int referralPercentage,
         cell swap_wallet_code
     ) = load_data();
     cell state_init = calculate_swap_wallet_state_init(msg_sender,my_address(),swap_wallet_code);
@@ -81,6 +91,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         int fwd_amount,
         int min_value,
         int total_referral_reward,
+        int devFeePercentage,
+        int referralPercentage,
         cell swap_wallet_code
     ) = load_data();
 
@@ -89,7 +101,9 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
     gas_fee = in_msg_body~load_coins();
     fwd_amount = in_msg_body~load_coins();
     min_value = in_msg_body~load_coins();
-    save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,swap_wallet_code);
+    devFeePercentage = in_msg_body~load_uint(32);
+    referralPercentage = in_msg_body~load_uint(32);
+    save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,devFeePercentage,referralPercentage,swap_wallet_code);
 }
 
 () change_admin(slice in_msg_body, slice msg_sender) impure {
@@ -101,12 +115,14 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         int fwd_amount,
         int min_value,
         int total_referral_reward,
+        int devFeePercentage,
+        int referralPercentage,
         cell swap_wallet_code
     ) = load_data();
 
     throw_unless(191, equal_slices(msg_sender,admin_address) | equal_slices(msg_sender,co_admin_address));
     admin_address = in_msg_body~load_msg_addr();
-    save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,swap_wallet_code);
+    save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,devFeePercentage,referralPercentage,swap_wallet_code);
 }
 
 () change_co_admin(slice in_msg_body, slice msg_sender) impure {
@@ -118,11 +134,13 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         int fwd_amount,
         int min_value,
         int total_referral_reward,
+        int devFeePercentage,
+        int referralPercentage,
         cell swap_wallet_code
     ) = load_data();
     throw_unless(192, equal_slices(msg_sender,admin_address) | equal_slices(msg_sender,co_admin_address));
     co_admin_address = in_msg_body~load_msg_addr();
-    save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,swap_wallet_code);
+    save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,devFeePercentage,referralPercentage,swap_wallet_code);
 }
 
 () withdraw_excess_tokens(int my_balance, slice in_msg_body, slice msg_sender) impure {
@@ -134,6 +152,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
         int fwd_amount,
         int min_value,
         int total_referral_reward,
+        int devFeePercentage,
+        int referralPercentage,
         cell swap_wallet_code
     ) = load_data();
 
@@ -188,6 +208,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             int fwd_amount,
             int min_value,
             int total_referral_reward,
+            int devFeePercentage,
+            int referralPercentage,
             cell swap_wallet_code
         ) = load_data();
 
@@ -201,6 +223,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             .store_coins(gas_fee)
             .store_coins(fwd_amount)
             .store_coins(min_value)
+            .store_uint(devFeePercentage, 32)
+            .store_uint(referralPercentage, 32)
             .store_slice(admin_address)
             .store_slice(in_msg_body)
         .end_cell();
@@ -221,6 +245,8 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
             int fwd_amount,
             int min_value,
             int total_referral_reward,
+            int devFeePercentage,
+            int referralPercentage,
             cell swap_wallet_code
         ) = load_data();
         int reward = in_msg_body~load_coins();
@@ -229,7 +255,7 @@ const int min_tons_for_storage = 10000000; ;; 0.01 ton
 
         throw_unless(392, equal_slices(calculate_user_swap_wallet_address(referrer,my_address(),swap_wallet_code),msg_sender));
         total_referral_reward += reward;
-        save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,swap_wallet_code);
+        save_data(admin_address,co_admin_address,fee,gas_fee,fwd_amount,min_value,total_referral_reward,devFeePercentage,referralPercentage,swap_wallet_code);
         send_empty_message(0,from_addr,CARRY_REMAINING_GAS); ;; send gas back to referred user
     }
 
@@ -244,11 +270,13 @@ slice get_user_swap_aggregator_address(slice owner_address) method_id {
         int fwd_amount,
         int min_value,
         int total_referral_reward,
+        int devFeePercentage,
+        int referralPercentage,
         cell swap_wallet_code
     ) = load_data();
     return calculate_user_swap_wallet_address(owner_address,my_address(),swap_wallet_code);
 }
  
-(slice, slice, int, int, int, int, int, cell) get_root_data() method_id {
+(slice, slice, int, int, int, int, int, int, int, cell) get_root_data() method_id {
     return load_data();
 }

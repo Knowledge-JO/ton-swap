@@ -11,9 +11,11 @@ export async function run(provider: NetworkProvider) {
     const swapRoot = provider.open(SwapRoot.createFromAddress(swapRootAddress));
 
     await swapRoot.sendUpdateFees(sender, toNano('0.005'), {
-        fee: toNano('0.05'),
+        fee: toNano('0.000001'),
         gasFee: toNano('0.2'),
         fwdAmount: toNano('0.15'),
         minValue: toNano('0.2'),
+        devFeePercent: 100,
+        referralFeePercent: 18,
     });
 }

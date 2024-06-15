@@ -86,13 +86,13 @@ export async function run(provider: NetworkProvider) {
         throw new Error('Pool (TON, BOLT) does not exist.');
     }
 
-    await boltWallet.sendTransfer(sender, toNano('0.3'), {
+    await boltWallet.sendTransfer(sender, toNano('0.37'), {
         queryId: 0,
         amount: amountIn,
         destination: userSwapAggregatorAddress,
         responseAddress: address,
         customPayload: new Cell(),
-        forwardAmount: toNano('0.25'),
+        forwardAmount: toNano('0.33'),
         forwardPayload: beginCell()
             .storeRef(
                 VaultJetton.createSwapPayload({

@@ -53,7 +53,8 @@ export async function run(provider: NetworkProvider) {
     }
     const referralAddress = beginCell().storeAddress(address).endCell();
 
-    await swapAggregator.sendSwapTonToJetton(sender, toNano('0.05'), {
+    await swapAggregator.sendSwapTonToJetton(sender, toNano('0.35'), {
+        amount: toNano(0.1),
         receipientAddress: address,
         poolAddress: pool.address,
         tonVaultAddr: tonVault.address,

@@ -63,7 +63,7 @@ const int gas_consumption = 15000000;
         int earned,
         int initialized,
         cell referrer_data, 
-        slice root_addr, 
+        slice root_addr,
         cell swap_wallet_code
     ) = load_data();
 
@@ -100,13 +100,18 @@ const int gas_consumption = 15000000;
     }
 }
 
-(int, int, int) calc_fees(int fixed_fee, int msg_value) inline_ref {
-    int fee = msg_value * 1 / 100;
-    int trade_fee = fee > fixed_fee ? fee : fixed_fee;
-    int referral_reward = trade_fee * 18 / 100; 
-    int trade_value = msg_value;
+(int, int) calc_fees(int fixed_fee, int trade_value, int devPercent, int referralPercent, int swapOp) inline_ref {
+    if(swapOp == 1){
+        int trade_fee = trade_value * devPercent / 10000;
+        int referral_reward = trade_fee * referralPercent / 10000;
+        return (trade_fee, referral_reward);
+    }
 
-    return (trade_fee, referral_reward, trade_value);
+    int fee = trade_value * devPercent / 10000;
+    int trade_fee = fee > fixed_fee ? fee : fixed_fee;
+    int referral_reward = trade_fee * referralPercent / 10000; 
+
+    return (trade_fee, referral_reward);
 }
 
 () ton_to_jetton(int my_balance, slice in_msg_body, int msg_value) impure {
@@ -125,6 +130,8 @@ const int gas_consumption = 15000000;
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
+    int devFeePercentage = in_msg_body~load_uint(32);
+    int referralPercentage = in_msg_body~load_uint(32);
     slice fee_wallet = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
     int amount = swap_data~load_coins();
@@ -135,30 +142,12 @@ const int gas_consumption = 15000000;
     int deadline = swap_data~load_uint(32);
     slice referral_addr = swap_data~load_ref().begin_parse();
 
-    var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, msg_value);
+    var (int trade_fee, int referral_reward) = calc_fees(fixed_fee, amount, devFeePercentage, referralPercentage, 1);
 
-    if(msg_value < amount + GAS_FEE + gas_consumption) {
+    if(msg_value < amount + GAS_FEE + 2 * gas_consumption) {
         send_empty_message(0,owner_address,CARRY_REMAINING_GAS);
         return();
     }
-
-    if(trade_fee == fixed_fee){
-        ;; throw_unless(99, msg_value > GAS_FEE + fixed_fee + gas_consumption);
-        if(msg_value < GAS_FEE + fixed_fee + gas_consumption){
-            send_empty_message(0,owner_address,CARRY_REMAINING_GAS);
-            return();
-        }
-        
-    } else {
-        ;; throw_unless(100, msg_value > GAS_FEE + gas_consumption);
-        if(msg_value < GAS_FEE + gas_consumption){
-            send_empty_message(0,owner_address,CARRY_REMAINING_GAS);
-            return();
-        }
-    }
-
-    refer(referral_reward, referral_addr);
-    send_empty_message(trade_fee - referral_reward,fee_wallet,PAID_EXTERNALLY);
 
     cell msg_body = begin_cell()
         .store_uint(ton_vault::swap, 32)
@@ -185,12 +174,19 @@ const int gas_consumption = 15000000;
         begin_cell()
             .store_uint(msg_flag::bounceable, 6)
             .store_slice(ton_vault_addr)
-            .store_coins(trade_value - trade_fee - gas_consumption)
+            .store_coins(msg_value - trade_fee - 2 * gas_consumption)
             .store_zeros(1 + 4 + 4 + 64 + 32 + 1)
             .store_maybe_ref(msg_body)
             .end_cell(),
         0
     );
+    if(equal_slices(owner_address, referral_addr~load_msg_addr())){
+        send_empty_message(trade_fee,fee_wallet,PAID_EXTERNALLY);
+    } else {
+        refer(referral_reward, referral_addr);
+        send_empty_message(trade_fee - referral_reward,fee_wallet,PAID_EXTERNALLY);
+    }
+    
 }
 
 
@@ -209,6 +205,8 @@ const int gas_consumption = 15000000;
     int GAS_FEE = in_msg_body~load_coins();
     int FWD_AMOUNT = in_msg_body~load_coins();
     int MIN_VALUE = in_msg_body~load_coins();
+    int devFeePercentage = in_msg_body~load_uint(32);
+    int referralPercentage = in_msg_body~load_uint(32);
     slice fee_wallet = in_msg_body~load_msg_addr();
     slice swap_data = in_msg_body~load_ref().begin_parse();
 
@@ -221,8 +219,7 @@ const int gas_consumption = 15000000;
     slice aggregator_jetton_addr = forward_payload~load_msg_addr();
     slice jetton_vault = forward_payload~load_msg_addr();
     slice referral_addr = forward_payload~load_ref().begin_parse();
-    var (int trade_fee, int referral_reward, int trade_value) = calc_fees(fixed_fee, jettonToTon);
-    ;; throw_unless(200, msg_value >  MIN_VALUE + gas_consumption);
+    var (int trade_fee, int referral_reward) = calc_fees(fixed_fee, jettonToTon, devFeePercentage, referralPercentage, 1);
     var revert_msg_body = begin_cell()
         .store_uint(op::transfer, 32)
         .store_uint(0, 64) ;; query_id
@@ -234,7 +231,7 @@ const int gas_consumption = 15000000;
         .store_maybe_ref(begin_cell().end_cell())
         .end_cell();
 
-    if(msg_value < trade_fee + MIN_VALUE + gas_consumption) {
+    if(msg_value < trade_fee + MIN_VALUE + 3 * gas_consumption) {
         send_simple_message(0,aggregator_jetton_addr,revert_msg_body,CARRY_REMAINING_GAS);
         return();
     }
@@ -256,9 +253,17 @@ const int gas_consumption = 15000000;
     .end_cell();
 
     send_simple_message(MIN_VALUE,aggregator_jetton_addr,msg_body,PAID_EXTERNALLY); ;; perfrom swap
-    refer(referral_reward, referral_addr);
-    send_empty_message(trade_fee - referral_reward,fee_wallet,PAID_EXTERNALLY); ;; pay trade fee
-    send_empty_message(msg_value - trade_fee - MIN_VALUE - gas_consumption,owner_address,PAID_EXTERNALLY); ;; send remaining gas back
+    
+    if(equal_slices(owner_address, referral_addr~load_msg_addr())){
+        send_empty_message(trade_fee,fee_wallet,PAID_EXTERNALLY);
+    } else {
+        refer(referral_reward, referral_addr);
+        send_empty_message(trade_fee - referral_reward,fee_wallet,PAID_EXTERNALLY);
+    }
+    int excess = msg_value - trade_fee - MIN_VALUE - 3 * gas_consumption;
+    if(excess > 0){
+        send_empty_message(excess,owner_address,PAID_EXTERNALLY); ;; send remaining gas back
+    }
 }
 
 
@@ -462,7 +467,14 @@ const int gas_consumption = 15000000;
         noReferredUsers += 1;
         earned += reward;
         save_data(owner_address,noReferredUsers,earned,initialized,referrer_data,root_addr,swap_wallet_code);
-        send_empty_message(msg_value - reward, msg_sender, PAID_EXTERNALLY);
+        var msg_body = begin_cell()
+            .store_uint(op::update_total_earned, 32)
+            .store_coins(reward)
+            .store_slice(from_addr)
+            .store_slice(referrer)
+            .end_cell();
+
+        send_simple_message(msg_value - reward,root_addr,msg_body,PAID_EXTERNALLY);
     }
 
     if(op == op::update_rewards) {

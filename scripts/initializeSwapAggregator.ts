@@ -10,5 +10,5 @@ export async function run(provider: NetworkProvider) {
 
     const swapRoot = provider.open(SwapRoot.createFromAddress(swapRootAddress));
 
-    await swapRoot.sendInitializeAggregator(sender, toNano('0.015'));
+    await swapRoot.sendInitializeAggregator(sender, toNano('0.05'));
 }
